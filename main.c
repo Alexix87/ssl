@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -9,7 +8,7 @@
 #define NUMCOLS 13
 
 
-typedef enum{INICIO, FIN, LEER, ESCRIBIR, ID, CONSTANTE, PARENIZQUIERDO, PARENDERECHO, PUNTOYCOMA, COMA, ASIGNACION, SUMA, RESTA, FDT, ERRORLEXICO} TOKEN;
+typedef enum{INICIO, FIN, LEER, ESCRIBIR, ID, CONSTANTE, PARENIZQUIERDO,PARENDERECHO, PUNTOYCOMA, COMA, ASIGNACION, SUMA, RESTA, FDT, ERRORLEXICO} TOKEN;
 
 typedef struct {
      char identifi[TAMANIO_LEXICO];
@@ -117,7 +116,7 @@ void Objetivo(void){
 
 void Programa(void){
     /* <programa> -> #comenzar INICIO <listaSentencias> FIN */
-    Comenzar();//de inicio semántico en caso de corresponder
+    Comenzar();
     Match(INICIO);
     ListaSentencias();
     Match(FIN);
@@ -150,14 +149,14 @@ void Sentencia(void){
             Asignar(izq, der); //genera instrucción de asignacion
             Match(PUNTOYCOMA);
             break;
-        case LEER:	/* <sentencia> -> LEER ( <listaIdentificadores> ) */
+        case LEER:	/* <sentencia> -> LEER ( <listaIdentificadores> ); */
             Match(LEER);
             Match(PARENIZQUIERDO);
             ListaIdentificadores();
             Match(PARENDERECHO);
             Match(PUNTOYCOMA);
             break;
-        case ESCRIBIR:	/* <sentencia> -> ESCRIBIR ( <listaExpresiones> ) */
+        case ESCRIBIR:	/* <sentencia> -> ESCRIBIR ( <listaExpresiones> ); */
             Match(ESCRIBIR);
             Match(PARENIZQUIERDO);
             ListaExpresiones();
@@ -176,7 +175,7 @@ void Expresion(REG_EXPRESION * presul){
     TOKEN t;
     Primaria(&operandoIzq);
     for (t=ProximoToken(); t==SUMA || t==RESTA; t = ProximoToken()){
-        OperadorAditivo(op);
+        OperadorAditivo(op); // obtenemos el simbolo en char
         Primaria(&operandoDer);
         operandoIzq = GenInfijo(operandoIzq, op, operandoDer);
     }
@@ -226,7 +225,8 @@ void Primaria(REG_EXPRESION * presul) {
             *presul = ProcesarCte();
             break;
         case PARENIZQUIERDO :	/* <primaria> -> PARENIZQUIERDO <expresion> PARENDERECHO */
-            Match(PARENIZQUIERDO);    Expresion(presul);
+            Match(PARENIZQUIERDO);
+            Expresion(presul);
             Match(PARENDERECHO);
             break;
         default:
@@ -304,8 +304,8 @@ char* ProcesarOp(void){
 }
 
 //Funciones auxiliares
-void Match(TOKEN t) {
-    if ( !(t==ProximoToken())) ErrorSintactico();
+void Match(TOKEN tokenEsperado) {
+    if ( !(tokenEsperado==ProximoToken())) ErrorSintactico();
     flagToken = 0;
 }
 
@@ -351,6 +351,8 @@ int Buscar(char * id, RegTS * TS, TOKEN * t) {
     }
     return 0;
 }
+// En buscar: distingue a las palabras resevadas de los ID.
+
 
 void Colocar(char * id, RegTS * TS){
     /* Agrega un identificador a la TS */
@@ -407,16 +409,16 @@ TOKEN scanner(){
 /* 13 fdt  */{ 14, 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 },
 /* 14 Err  */{ 14, 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 }};
 
-    int car;
+    int caracter;
     int col;
     int estado = 0;
     int i = 0;
     do{
-        car = fgetc(in);
-        col = columna(car);
+        caracter = fgetc(in);
+        col = columna(caracter);
         estado = tabla[estado][col];
         if ( col != 11 )  { //si es espacio no lo agrega al buffer
-            buffer[i] = car;
+            buffer[i] = caracter;
             i++;
         }
     }while ( !estadoFinal(estado) && !(estado == 14) );
@@ -425,13 +427,13 @@ TOKEN scanner(){
     switch ( estado ){
         case 2 :
             if ( col != 11 ){		//si el carácter espureo no es blanco…
-                ungetc(car, in);	// lo retorna al flujo
+                ungetc(caracter, in);	// lo retorna al flujo
                 buffer[i-1] = '\0';
             }
             return ID;
         case 4 :
             if ( col != 11 )  {
-                ungetc(car, in);
+                ungetc(caracter, in);
                 buffer[i-1] = '\0';
             }
            return CONSTANTE;
@@ -448,8 +450,8 @@ TOKEN scanner(){
     return 0;
 }
 
-int estadoFinal(int e){
-    if ( e == 0 || e == 1 || e == 3 || e == 11 || e == 14 ) return 0;
+int estadoFinal(int estado){
+    if ( estado == 0 || estado == 1 || estado == 3 || estado == 11 || estado == 14 ) return 0;
     return 1;
 }
 
@@ -466,6 +468,7 @@ int columna(int c){
     if ( c == '=' ) return 9;
     if ( c == EOF ) return 10;
     if ( isspace(c) ) return 11;
+    ////La funcion isspace devuelve True si el carácter es un espacio, tabulador, avance de línea, retorno de carro
     return 12;
 }
 
