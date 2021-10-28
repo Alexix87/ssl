@@ -17,7 +17,6 @@ typedef struct {
 
 RegTS TS[1000] = {{"inicio", INICIO},{"fin", FIN},{"leer", LEER},{"escribir", ESCRIBIR},{"$", 99}};
 
-
 typedef struct{
     TOKEN clase;
     char nombre[TAMANIO_LEXICO];
@@ -28,7 +27,6 @@ FILE * in;
 int flagToken = 0;
 char buffer[TAMANIO_LEXICO];
 TOKEN tokenActual;
-
 
 void Objetivo(void);
 void Programa(void);
@@ -65,11 +63,9 @@ int columna(int c);
 int estadoFinal(int e);
 
 int main(int argc, char * argv[]){
-
     char nombreArchivo[TAMANIO_NOMBRE];
     int largoDeNombre;
 
-//verifica errores posibles
     if ( argc == 1 ){
         printf("Debe ingresar el nombre del archivo fuente (en lenguaje Micro) en la linea de comandos\n");
         return -1;
@@ -88,7 +84,6 @@ int main(int argc, char * argv[]){
         return -1;
     }
 
-    //requiere para compilar un archivo de extensión.m archivo.m
     if ( nombreArchivo[largoDeNombre-1] != 'm' || nombreArchivo[largoDeNombre-2] != '.' ){
         printf("Nombre incorrecto del Archivo Fuente, debe terminar en .m\n");
         return -1;
@@ -96,9 +91,8 @@ int main(int argc, char * argv[]){
 
     if ( (in = fopen(nombreArchivo, "r") ) == NULL ){
         printf("No se pudo abrir archivo fuente\n");
-        return -1;//no pudo abrir archivo
+        return -1;
     }
-//fin de verificaciones
 
     Objetivo();
 
@@ -106,7 +100,6 @@ int main(int argc, char * argv[]){
     return 0;
 }
 
-// PAS:
 void Objetivo(void){
     /* <objetivo> -> <programa> FDT #terminar */
     Programa();
@@ -133,7 +126,7 @@ void ListaSentencias(void){
                 Sentencia();
                 break;
             default :
-                return; //si no es sentencia termina la funcion
+                return;
         }
     }
 }
@@ -146,7 +139,7 @@ void Sentencia(void){
             Identificador(&izq);
             Match(ASIGNACION);
             Expresion(&der);
-            Asignar(izq, der); //genera instrucción de asignacion
+            Asignar(izq, der); //genera instruccion de asignacion
             Match(PUNTOYCOMA);
             break;
         case LEER:	/* <sentencia> -> LEER ( <listaIdentificadores> ); */
@@ -267,8 +260,6 @@ void OperadorAditivo(char * presul) {
         ErrorSintactico(t);
 }
 
-
-// Rutinas semanticas:
 REG_EXPRESION ProcesarCte(void){
     /* Convierte cadena que representa numero a entero y construye un registro semantico */
     REG_EXPRESION reg;
@@ -351,8 +342,6 @@ int Buscar(char * id, RegTS * TS, TOKEN * t) {
     }
     return 0;
 }
-// En buscar: distingue a las palabras resevadas de los ID.
-
 
 void Colocar(char * id, RegTS * TS){
     /* Agrega un identificador a la TS */
@@ -392,7 +381,7 @@ void Asignar(REG_EXPRESION izq, REG_EXPRESION der){
 
 TOKEN scanner(){
     int tabla[NUMESTADOS][NUMCOLS] =
-//              L   D    +    -    (    )    ,    ;    :    =   EOF  ´ ´ OTRO
+//              L   D    +    -    (    )    ,    ;    :    =   EOF  " " OTRO
 /* 0	  */{ { 1,  3 ,  5 ,  6 ,  7 ,  8 ,  9 , 10 , 11 , 14 , 13 ,  0 , 14 },
 /* 1	   */{  1,  1 ,  2 ,  2 ,  2 ,  2 ,  2 ,  2 ,  2 ,  2 ,  2 ,  2 ,  2 },
 /* 2  ID   */{ 14, 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 , 14 },
@@ -426,7 +415,7 @@ TOKEN scanner(){
     buffer[i] = '\0';
     switch ( estado ){
         case 2 :
-            if ( col != 11 ){		//si el carácter espureo no es blanco…
+            if ( col != 11 ){		//si el caracter espureo no es blanco
                 ungetc(caracter, in);	// lo retorna al flujo
                 buffer[i-1] = '\0';
             }
@@ -468,7 +457,6 @@ int columna(int c){
     if ( c == '=' ) return 9;
     if ( c == EOF ) return 10;
     if ( isspace(c) ) return 11;
-    ////La funcion isspace devuelve True si el carácter es un espacio, tabulador, avance de línea, retorno de carro
     return 12;
 }
 
